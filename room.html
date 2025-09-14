@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeadTalk - ห้องสนทนา</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="room-container">
+    <h1>ห้องสนทนา</h1>
+    <p>รหัสห้อง: <span id="roomIdDisplay"></span></p>
+    <p>ผู้ใช้: <span id="usernameDisplayRoom"></span></p>
+
+    <div id="questionContainer">
+      <p id="currentQuestion">กำลังรอคำถาม...</p>
+      <span id="timer">03:00</span>
+    </div>
+
+    <div id="messages" class="messages"></div>
+
+    <div class="chat-input">
+      <input type="text" id="msgInput" placeholder="พิมพ์ข้อความแล้วกด Enter">
+      <button id="sendBtn">ส่ง</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -3,23 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DeadTalk - เข้าสู่ระบบ</title>
+  <title>DeadTalk - Lobby</title>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="login-container">
-    <h1 id="form-title">เข้าสู่ระบบ</h1>
+  <div class="lobby-container">
+    <h1>ล็อบบี้</h1>
+    <p>ผู้ใช้: <span id="usernameDisplay"></span></p>
 
-    <input type="email" id="email" placeholder="อีเมล">
-    <input type="password" id="password" placeholder="รหัสผ่าน">
+    <div class="lobby-actions">
+      <button id="createRoomBtn">สร้างห้องใหม่</button>
+      <p id="roomMsg"></p>
 
-    <button id="loginBtn">เข้าสู่ระบบ</button>
-    <button id="registerBtn" style="display:none;">สมัครสมาชิก</button>
-
-    <p class="toggle-text">
-      <span id="toggleForm">สมัครสมาชิก</span>
-    </p>
+      <input type="text" id="roomCodeInput" placeholder="รหัสห้อง">
+      <button id="joinRoomBtn">เข้าร่วมห้อง</button>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
