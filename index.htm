@@ -11,6 +11,9 @@
   <div class="login-container">
     <h1 id="form-title">เข้าสู่ระบบ</h1>
 
+    <!-- เพิ่มช่องกรอกชื่อผู้ใช้ สำหรับสมัครสมาชิก -->
+    <input type="text" id="displayName" placeholder="ชื่อผู้ใช้" style="display:none">
+
     <input type="email" id="email" placeholder="อีเมล">
     <input type="password" id="password" placeholder="รหัสผ่าน">
 
@@ -22,9 +25,12 @@
     </p>
   </div>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <!-- Script แยก index.js -->
   <script src="index.js"></script>
 </body>
 </html>

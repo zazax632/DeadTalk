@@ -90,31 +90,17 @@ msgInput.value = "";
 sendBtn.addEventListener('click', sendMessage);
 msgInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
-// ---------------------- Question ----------------------
+// ---------------------- Question & Timer ----------------------
 let questionStarted = false;
-let timerInterval = null;
 
-// ลงทะเบียนผู้เล่น
-playersRef.child(username).set(true);
+// ลงทะเบียนผู้เล่น (ไม่ลบของคนอื่น)
+playersRef.update({ [username]: true });
 
-// ฟังจำนวนผู้เล่น
-playersRef.on('value', snap => {
-const players = snap.val() || {};
-const playerCount = Object.keys(players).length;
-
-// เริ่มคำถามและนับเวลาเมื่อมีผู้เล่น ≥ 2
-if (!questionStarted && playerCount >= 2) {
-questionStarted = true;
-
-// สุ่มคำถามแรก
-const firstQ = questions[Math.floor(Math.random() * questions.length)];
-statusRef.set({ currentQuestion: firstQ, startTime: Date.now() });
-
-// เริ่มตัวจับเวลาอัปเดตทุก 0.5 วินาที
-timerInterval = setInterval(() => {
+// ตัวจับเวลาอัปเดตทุก 0.5 วินาที
+setInterval(() => {
 statusRef.once('value').then(snap => {
 const data = snap.val();
-if (!data) return;
+if (!data || !data.startTime) return;
 const elapsed = Math.floor((Date.now() - data.startTime) / 1000);
 let remaining = 180 - elapsed;
 if (remaining < 0) remaining = 0;
@@ -123,6 +109,17 @@ const s = String(remaining % 60).padStart(2,'0');
 document.getElementById('timer').textContent = `${m}:${s}`;
 });
 }, 500);
+
+// ฟังจำนวนผู้เล่น
+playersRef.on('value', snap => {
+const players = snap.val() || {};
+const playerCount = Object.keys(players).length;
+
+// เริ่มคำถามและเวลาเมื่อมีผู้เล่น ≥ 2
+if (!questionStarted && playerCount >= 2) {
+questionStarted = true;
+const firstQ = questions[Math.floor(Math.random() * questions.length)];
+statusRef.update({ currentQuestion: firstQ, startTime: Date.now() });
 
 // เปลี่ยนคำถามทุก 3 นาที
 setInterval(() => {
@@ -135,7 +132,7 @@ statusRef.update({ currentQuestion: newQ, startTime: Date.now() });
 // ฟังคำถามปัจจุบัน
 statusRef.on('value', snap => {
 const data = snap.val();
-if (!data) return;
+if (!data || !data.currentQuestion) return;
 document.getElementById('currentQuestion').textContent = data.currentQuestion;
 });
 

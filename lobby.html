@@ -22,8 +22,45 @@
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="app.js"></script>
+  <script>
+    const dbConfig = {
+      apiKey: "AIzaSyBWavAWu-Za3Q6n-cPJu2vBCWtpRLjbsEc",
+      authDomain: "deadtalk3-7bd8d.firebaseapp.com",
+      databaseURL: "https://deadtalk3-7bd8d-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "deadtalk3-7bd8d",
+      storageBucket: "deadtalk3-7bd8d.appspot.com",
+      messagingSenderId: "623956597741",
+      appId: "1:623956597741:web:3e16f6b3f3e16f6b3e16f6"
+    };
+    firebase.initializeApp(dbConfig);
+    const db = firebase.database();
+
+    // ดึง username จาก URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const username = urlParams.get('user');
+    document.getElementById('usernameDisplay').textContent = username || "ผู้เล่น";
+
+    // สร้างห้องใหม่
+    document.getElementById('createRoomBtn').addEventListener('click', () => {
+      const roomId = "room-" + Date.now();
+      db.ref("rooms/" + roomId).set({ createdBy: username });
+      window.location.href = `room.html?user=${encodeURIComponent(username)}&room=${roomId}`;
+    });
+
+    // เข้าร่วมห้อง
+    document.getElementById('joinRoomBtn').addEventListener('click', () => {
+      const roomId = document.getElementById('roomCodeInput').value.trim();
+      if (!roomId) return alert("กรุณากรอกโค้ดห้อง");
+      
+      db.ref("rooms/" + roomId).get().then(snapshot => {
+        if (snapshot.exists()) {
+          window.location.href = `room.html?user=${encodeURIComponent(username)}&room=${roomId}`;
+        } else {
+          document.getElementById('roomMsg').textContent = "ไม่พบห้องนี้";
+        }
+      });
+    });
+  </script>
 </body>
 </html>
