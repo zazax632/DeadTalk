@@ -14,7 +14,7 @@
 <p>ผู้ใช้: <span id="usernameDisplayRoom"></span></p>
 
 <div id="questionContainer">
-<p id="currentQuestion">กำลังโหลดคำถาม...</p>
+<p id="currentQuestion">กำลังรอผู้เล่นคนที่ 2...</p>
 <span id="timer">03:00</span>
 </div>
 
@@ -36,47 +36,23 @@
 const firebaseConfig = {
 apiKey: "AIzaSyBWavAWu-Za3Q6n-cPJu2vBCWtpRLjbsEc",
 authDomain: "deadtalk3-7bd8d.firebaseapp.com",
-databaseURL: "https://deadtalk3-7bd8d-default-rtdb.firebaseio.com",
+databaseURL: "https://deadtalk3-7bd8d-default-rtdb.asia-southeast1.firebasedatabase.app",
 projectId: "deadtalk3-7bd8d",
 storageBucket: "deadtalk3-7bd8d.appspot.com",
 messagingSenderId: "623956597741",
 appId: "1:623956597741:web:3e16f6b3f3e16f6b3e16f6"
 };
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database();
 
-// ---------------------- Utility ----------------------
+// ---------------------- Questions ----------------------
 const questions = [
-"คำถามที่ 1", "คำถามที่ 2", "คำถามที่ 3", "คำถามที่ 4", "คำถามที่ 5"
+"ถ้าวันนี้เป็นวันสุดท้ายของชีวิต คุณอยากทำอะไร?",
+"อะไรคือสิ่งที่ทำให้คุณยิ้มได้เสมอ?",
+"คุณเคยร้องไห้เพราะความสุขครั้งสุดท้ายเมื่อไหร่?",
+"อะไรคือความทรงจำที่คุณอยากกลับไปอีกครั้ง?",
+"คำถามอื่นๆ..."
 ];
-let usedQuestions = [], timer = null;
-
-function getRandomQuestion() {
-if (usedQuestions.length === questions.length) usedQuestions = [];
-let q;
-do { q = questions[Math.floor(Math.random() * questions.length)]; }
-while (usedQuestions.includes(q));
-usedQuestions.push(q);
-return q;
-}
-
-function startTimer() {
-let time = 180;
-const timerSpan = document.getElementById('timer');
-timerSpan.textContent = "03:00";
-clearInterval(timer);
-timer = setInterval(() => {
-time--;
-let m = String(Math.floor(time/60)).padStart(2,'0');
-let s = String(time%60).padStart(2,'0');
-timerSpan.textContent = `${m}:${s}`;
-if (time <= 0) {
-clearInterval(timer);
-document.getElementById('currentQuestion').textContent = "หมดเวลา!";
-}
-}, 1000);
-}
 
 // ---------------------- Room ----------------------
 const urlParams = new URLSearchParams(window.location.search);
@@ -86,14 +62,15 @@ const currentRoomId = urlParams.get('room');
 document.getElementById('roomIdDisplay').textContent = currentRoomId;
 document.getElementById('usernameDisplayRoom').textContent = username;
 
+const messagesDiv = document.getElementById('messages');
 const msgInput = document.getElementById('msgInput');
 const sendBtn = document.getElementById('sendBtn');
-const messagesDiv = document.getElementById('messages');
 
-// ✅ เปลี่ยนจาก chatrooms → rooms ให้ตรงกับ Rules
 const messagesRef = db.ref("rooms/" + currentRoomId + "/messages");
+const statusRef = db.ref("status/" + currentRoomId);
+const playersRef = db.ref("status/" + currentRoomId + "/players");
 
-// โหลดข้อความแชท
+// ---------------------- Chat ----------------------
 messagesRef.on('child_added', snap => {
 const data = snap.val();
 if (!data) return;
@@ -104,7 +81,6 @@ messagesDiv.appendChild(div);
 messagesDiv.scrollTop = messagesDiv.scrollHeight;
 });
 
-// ส่งข้อความ
 function sendMessage() {
 const text = msgInput.value.trim();
 if (!text) return;
@@ -114,9 +90,55 @@ msgInput.value = "";
 sendBtn.addEventListener('click', sendMessage);
 msgInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
-// โหลดคำถามแรก
-document.getElementById('currentQuestion').textContent = getRandomQuestion();
-startTimer();
+// ---------------------- Question ----------------------
+let questionStarted = false;
+let timerInterval = null;
+
+// ลงทะเบียนผู้เล่น
+playersRef.child(username).set(true);
+
+// ฟังจำนวนผู้เล่น
+playersRef.on('value', snap => {
+const players = snap.val() || {};
+const playerCount = Object.keys(players).length;
+
+// เริ่มคำถามและนับเวลาเมื่อมีผู้เล่น ≥ 2
+if (!questionStarted && playerCount >= 2) {
+questionStarted = true;
+
+// สุ่มคำถามแรก
+const firstQ = questions[Math.floor(Math.random() * questions.length)];
+statusRef.set({ currentQuestion: firstQ, startTime: Date.now() });
+
+// เริ่มตัวจับเวลาอัปเดตทุก 0.5 วินาที
+timerInterval = setInterval(() => {
+statusRef.once('value').then(snap => {
+const data = snap.val();
+if (!data) return;
+const elapsed = Math.floor((Date.now() - data.startTime) / 1000);
+let remaining = 180 - elapsed;
+if (remaining < 0) remaining = 0;
+const m = String(Math.floor(remaining / 60)).padStart(2,'0');
+const s = String(remaining % 60).padStart(2,'0');
+document.getElementById('timer').textContent = `${m}:${s}`;
+});
+}, 500);
+
+// เปลี่ยนคำถามทุก 3 นาที
+setInterval(() => {
+const newQ = questions[Math.floor(Math.random() * questions.length)];
+statusRef.update({ currentQuestion: newQ, startTime: Date.now() });
+}, 3 * 60 * 1000);
+}
+});
+
+// ฟังคำถามปัจจุบัน
+statusRef.on('value', snap => {
+const data = snap.val();
+if (!data) return;
+document.getElementById('currentQuestion').textContent = data.currentQuestion;
+});
+
 </script>
 </body>
 </html>
