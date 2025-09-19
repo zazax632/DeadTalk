@@ -1,34 +1,122 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DeadTalk - ห้องสนทนา</title>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeadTalk - ห้องสนทนา</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="room-container">
-    <h1>ห้องสนทนา</h1>
-    <p>รหัสห้อง: <span id="roomIdDisplay"></span></p>
-    <p>ผู้ใช้: <span id="usernameDisplayRoom"></span></p>
+<div class="room-container">
+<h1>ห้องสนทนา</h1>
+<p>รหัสห้อง: <span id="roomIdDisplay"></span></p>
+<p>ผู้ใช้: <span id="usernameDisplayRoom"></span></p>
 
-    <div id="questionContainer">
-      <p id="currentQuestion">กำลังรอคำถาม...</p>
-      <span id="timer">03:00</span>
-    </div>
+<div id="questionContainer">
+<p id="currentQuestion">กำลังโหลดคำถาม...</p>
+<span id="timer">03:00</span>
+</div>
 
-    <div id="messages" class="messages"></div>
+<div id="messages" class="messages"></div>
 
-    <div class="chat-input">
-      <input type="text" id="msgInput" placeholder="พิมพ์ข้อความแล้วกด Enter">
-      <button id="sendBtn">ส่ง</button>
-    </div>
-  </div>
+<div class="chat-input">
+<input type="text" id="msgInput" placeholder="พิมพ์ข้อความแล้วกด Enter">
+<button id="sendBtn">ส่ง</button>
+</div>
+</div>
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="app.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+// ---------------------- Firebase Config ----------------------
+const firebaseConfig = {
+apiKey: "AIzaSyBWavAWu-Za3Q6n-cPJu2vBCWtpRLjbsEc",
+authDomain: "deadtalk3-7bd8d.firebaseapp.com",
+databaseURL: "https://deadtalk3-7bd8d-default-rtdb.firebaseio.com",
+projectId: "deadtalk3-7bd8d",
+storageBucket: "deadtalk3-7bd8d.appspot.com",
+messagingSenderId: "623956597741",
+appId: "1:623956597741:web:3e16f6b3f3e16f6b3e16f6"
+};
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+// ---------------------- Utility ----------------------
+const questions = [
+"คำถามที่ 1", "คำถามที่ 2", "คำถามที่ 3", "คำถามที่ 4", "คำถามที่ 5"
+];
+let usedQuestions = [], timer = null;
+
+function getRandomQuestion() {
+if (usedQuestions.length === questions.length) usedQuestions = [];
+let q;
+do { q = questions[Math.floor(Math.random() * questions.length)]; }
+while (usedQuestions.includes(q));
+usedQuestions.push(q);
+return q;
+}
+
+function startTimer() {
+let time = 180;
+const timerSpan = document.getElementById('timer');
+timerSpan.textContent = "03:00";
+clearInterval(timer);
+timer = setInterval(() => {
+time--;
+let m = String(Math.floor(time/60)).padStart(2,'0');
+let s = String(time%60).padStart(2,'0');
+timerSpan.textContent = `${m}:${s}`;
+if (time <= 0) {
+clearInterval(timer);
+document.getElementById('currentQuestion').textContent = "หมดเวลา!";
+}
+}, 1000);
+}
+
+// ---------------------- Room ----------------------
+const urlParams = new URLSearchParams(window.location.search);
+const username = urlParams.get('user');
+const currentRoomId = urlParams.get('room');
+
+document.getElementById('roomIdDisplay').textContent = currentRoomId;
+document.getElementById('usernameDisplayRoom').textContent = username;
+
+const msgInput = document.getElementById('msgInput');
+const sendBtn = document.getElementById('sendBtn');
+const messagesDiv = document.getElementById('messages');
+
+// ✅ เปลี่ยนจาก chatrooms → rooms ให้ตรงกับ Rules
+const messagesRef = db.ref("rooms/" + currentRoomId + "/messages");
+
+// โหลดข้อความแชท
+messagesRef.on('child_added', snap => {
+const data = snap.val();
+if (!data) return;
+const div = document.createElement('div');
+div.classList.add('msg');
+div.textContent = `${data.user}: ${data.text}`;
+messagesDiv.appendChild(div);
+messagesDiv.scrollTop = messagesDiv.scrollHeight;
+});
+
+// ส่งข้อความ
+function sendMessage() {
+const text = msgInput.value.trim();
+if (!text) return;
+messagesRef.push({ user: username, text });
+msgInput.value = "";
+}
+sendBtn.addEventListener('click', sendMessage);
+msgInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+// โหลดคำถามแรก
+document.getElementById('currentQuestion').textContent = getRandomQuestion();
+startTimer();
+</script>
 </body>
 </html>
