@@ -15,7 +15,7 @@ const db = firebase.database();
 // ---------------------- Elements ----------------------
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
-const displayNameInput = document.getElementById('displayName'); // ช่องชื่อผู้ใช้
+const displayNameInput = document.getElementById('displayName');
 const loginBtn = document.getElementById('loginBtn');
 const registerBtn = document.getElementById('registerBtn');
 const toggleForm = document.getElementById('toggleForm');
@@ -31,13 +31,13 @@ if (toggleForm) {
             formTitle.textContent = 'เข้าสู่ระบบ';
             loginBtn.style.display = 'block';
             registerBtn.style.display = 'none';
-            displayNameInput.style.display = 'none'; // ซ่อนช่องชื่อผู้ใช้
+            displayNameInput.style.display = 'none';
             toggleForm.textContent = 'สมัครสมาชิก';
         } else {
             formTitle.textContent = 'สมัครสมาชิก';
             loginBtn.style.display = 'none';
             registerBtn.style.display = 'block';
-            displayNameInput.style.display = 'block'; // แสดงช่องชื่อผู้ใช้
+            displayNameInput.style.display = 'block';
             toggleForm.textContent = 'เข้าสู่ระบบ';
         }
     });
@@ -52,13 +52,12 @@ if (loginBtn) {
 
         auth.signInWithEmailAndPassword(email, password)
             .then(userCredential => {
-                // ดึงชื่อผู้ใช้จาก Realtime Database
                 const uid = userCredential.user.uid;
-                db.ref('users/' + uid + '/displayName').once('value')
-                  .then(snapshot => {
-                      const username = snapshot.val() || email.split('@')[0];
-                      window.location.href = `lobby.html?user=${encodeURIComponent(username)}`;
-                  });
+                return db.ref('users/' + uid + '/displayName').once('value');
+            })
+            .then(snapshot => {
+                const username = snapshot.val() || emailInput.value.split('@')[0];
+                window.location.href = `lobby.html?user=${encodeURIComponent(username)}`;
             })
             .catch(error => alert('เข้าสู่ระบบไม่สำเร็จ: ' + error.message));
     });
@@ -74,19 +73,19 @@ if (registerBtn) {
 
         auth.createUserWithEmailAndPassword(email, password)
             .then(userCredential => {
-                const uid = userCredential.user.uid;
-                // บันทึกชื่อผู้ใช้ลง Realtime Database
-                db.ref('users/' + uid).set({ displayName: displayName })
-                  .then(() => {
-                      alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
-                      // กลับไปหน้า login
-                      isLogin = true;
-                      formTitle.textContent = 'เข้าสู่ระบบ';
-                      loginBtn.style.display = 'block';
-                      registerBtn.style.display = 'none';
-                      displayNameInput.style.display = 'none';
-                      toggleForm.textContent = 'สมัครสมาชิก';
-                  });
+                const user = userCredential.user;
+                const uid = user.uid;
+                // ตอนนี้ user authenticate แล้ว เราสามารถเขียนลง Realtime Database ได้
+                return db.ref('users/' + uid).set({ displayName: displayName });
+            })
+            .then(() => {
+                alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
+                isLogin = true;
+                formTitle.textContent = 'เข้าสู่ระบบ';
+                loginBtn.style.display = 'block';
+                registerBtn.style.display = 'none';
+                displayNameInput.style.display = 'none';
+                toggleForm.textContent = 'สมัครสมาชิก';
             })
             .catch(error => alert('สมัครสมาชิกไม่สำเร็จ: ' + error.message));
     });
