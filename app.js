@@ -11,10 +11,6 @@ const firebaseConfig = {
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   
-  let username = null;
-  let currentRoomId = null;
-  let questionTimer = null;
-  
   // ---------------------- Questions ----------------------
   const questions = [
   "ถ้าวันนี้เป็นวันสุดท้ายของชีวิต คุณอยากทำอะไร?",
@@ -24,26 +20,32 @@ const firebaseConfig = {
   "คำถามอื่นๆ..."
   ];
   
-  // ---------------------- Room ----------------------
+  // ---------------------- Elements ----------------------
   const urlParams = new URLSearchParams(window.location.search);
-  username = urlParams.get('user');
-  currentRoomId = urlParams.get('room');
+  const username = urlParams.get('user');
+  const currentRoomId = urlParams.get('room');
   
-  document.getElementById('roomIdDisplay').textContent = currentRoomId;
-  document.getElementById('usernameDisplayRoom').textContent = username;
-  
+  const roomDisplay = document.getElementById('roomIdDisplay');
+  const userDisplay = document.getElementById('usernameDisplayRoom');
   const messagesDiv = document.getElementById('messages');
   const msgInput = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
+  const questionDisplay = document.getElementById('currentQuestion');
+  const timerDisplay = document.getElementById('timer');
   
-  const messagesRef = db.ref("rooms/" + currentRoomId + "/messages");
-  const statusRef = db.ref("status/" + currentRoomId);
-  const playersRef = db.ref("status/" + currentRoomId + "/players");
+  if (roomDisplay) roomDisplay.textContent = currentRoomId;
+  if (userDisplay) userDisplay.textContent = username;
   
-  // ---------------------- Chat ----------------------
+  const messagesRef = currentRoomId ? db.ref("rooms/" + currentRoomId + "/messages") : null;
+  const statusRef = currentRoomId ? db.ref("status/" + currentRoomId) : null;
+  const playersRef = currentRoomId ? db.ref("status/" + currentRoomId + "/players") : null;
+  
+  // ---------------------- Chat & Room ----------------------
+  if (currentRoomId && username) {
+  // Chat
   messagesRef.on('child_added', snap => {
   const data = snap.val();
-  if (!data) return;
+  if (!data || !messagesDiv) return;
   const div = document.createElement('div');
   div.classList.add('msg');
   div.textContent = `${data.user}: ${data.text}`;
@@ -52,34 +54,33 @@ const firebaseConfig = {
   });
   
   function sendMessage() {
+  if (!msgInput) return;
   const text = msgInput.value.trim();
   if (!text) return;
   messagesRef.push({ user: username, text });
   msgInput.value = "";
   }
-  sendBtn.addEventListener('click', sendMessage);
-  msgInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
   
-  // ---------------------- Player Join ----------------------
-  // ลงทะเบียนผู้เล่น
+  if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+  if (msgInput) msgInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+  
+  // Player Join
   playersRef.child(username).set(true);
-  
-  // ลบผู้เล่นเมื่อปิดหน้า
   window.addEventListener('beforeunload', () => {
   playersRef.child(username).remove();
   });
   
-  // ---------------------- Question ----------------------
+  // Question & Timer
   let questionStarted = false;
+  let questionTimer = null;
+  let timerInterval = null;
   
   playersRef.on('value', snap => {
   const players = snap.val() || {};
   const playerCount = Object.keys(players).length;
   
-  // เริ่มคำถามเมื่อผู้เล่น >= 2 คน
   if (!questionStarted && playerCount >= 2) {
   questionStarted = true;
-  
   const firstQ = questions[Math.floor(Math.random() * questions.length)];
   statusRef.set({ currentQuestion: firstQ, startTime: Date.now() });
   
@@ -88,26 +89,28 @@ const firebaseConfig = {
   const newQ = questions[Math.floor(Math.random() * questions.length)];
   statusRef.update({ currentQuestion: newQ, startTime: Date.now() });
   }, 3 * 60 * 1000);
-  }
-  });
   
-  // ฟังคำถามและเวลา
-  let timerInterval = null;
-  statusRef.on('value', snap => {
-  const data = snap.val();
-  if (!data) return;
-  
-  // อัปเดตคำถาม
-  document.getElementById('currentQuestion').textContent = data.currentQuestion;
-  
-  // อัปเดตตัวจับเวลา
+  // Timer
   if (timerInterval) clearInterval(timerInterval);
   timerInterval = setInterval(() => {
+  statusRef.once('value').then(snap => {
+  const data = snap.val();
+  if (!data || !data.startTime || !timerDisplay) return;
   const elapsed = Math.floor((Date.now() - data.startTime) / 1000);
   let remaining = 180 - elapsed;
   if (remaining < 0) remaining = 0;
   const m = String(Math.floor(remaining / 60)).padStart(2,'0');
   const s = String(remaining % 60).padStart(2,'0');
-  document.getElementById('timer').textContent = `${m}:${s}`;
-  }, 500);
+  timerDisplay.textContent = `${m}:${s}`;
   });
+  }, 500);
+  }
+  });
+  
+  // ฟังคำถามปัจจุบัน
+  statusRef.on('value', snap => {
+  const data = snap.val();
+  if (!data || !questionDisplay || !data.currentQuestion) return;
+  questionDisplay.textContent = data.currentQuestion;
+  });
+  }
