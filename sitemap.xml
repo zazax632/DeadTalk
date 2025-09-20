@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+   <!-- หน้าแรก -->
+   <url>
+      <loc>https://zazax.632.github.io/DeadTalk/</loc>
+      <changefreq>weekly</changefreq>
+      <priority>1.0</priority>
+   </url>
+
+   <!-- หน้า Lobby -->
+   <url>
+      <loc>https://zazax.632.github.io/DeadTalk/lobby.html</loc>
+      <changefreq>daily</changefreq>
+      <priority>0.9</priority>
+   </url>
+
+   <!-- หน้า Room -->
+   <url>
+      <loc>https://zazax.632.github.io/DeadTalk/room.html</loc>
+      <changefreq>daily</changefreq>
+      <priority>0.9</priority>
+   </url>
+</urlset>
