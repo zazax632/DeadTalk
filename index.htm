@@ -3,25 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DeadTalk - เข้าสู่ระบบ</title>
+  <meta name="msvalidate.01" content="0BC031B4F8B8729FE71DBC1C5CA54D06" />
+  <title>DeadTalk - สมัครสมาชิก</title>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="login-container">
-    <h1 id="form-title">เข้าสู่ระบบ</h1>
+    <!-- ค่าเริ่มต้นให้เป็น "สมัครสมาชิก" -->
+    <h1 id="form-title">สมัครสมาชิก</h1>
 
-    <!-- เพิ่มช่องกรอกชื่อผู้ใช้ สำหรับสมัครสมาชิก -->
-    <input type="text" id="displayName" placeholder="ชื่อผู้ใช้" style="display:none">
+    <!-- ชื่อผู้ใช้ (โชว์ตอนสมัครสมาชิก) -->
+    <input type="text" id="displayName" placeholder="ชื่อผู้ใช้">
 
     <input type="email" id="email" placeholder="อีเมล">
     <input type="password" id="password" placeholder="รหัสผ่าน">
 
-    <button id="loginBtn">เข้าสู่ระบบ</button>
-    <button id="registerBtn" style="display:none;">สมัครสมาชิก</button>
+    <!-- ปุ่มสมัครสมาชิกแสดงก่อน -->
+    <button id="registerBtn">สมัครสมาชิก</button>
+    <button id="loginBtn" style="display:none;">เข้าสู่ระบบ</button>
 
     <p class="toggle-text">
-      <span id="toggleForm">สมัครสมาชิก</span>
+      <span id="toggleForm">มีบัญชีแล้ว? เข้าสู่ระบบ</span>
     </p>
   </div>
 
